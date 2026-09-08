@@ -5,16 +5,26 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Search, Globe, SunMoon, ChevronDown, User, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+  PopoverTitle,
+  PopoverDescription,
+} from '@/components/ui/popover';
 import { useAuthStore } from '@/stores/useAuthStore';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
 export function Header() {
   const router = useRouter();
-  
+   
   // Lấy state & hàm logout từ store Zustand
-  const { user, logout } = useAuthStore();
+  const { user, logout, isInitialized } = useAuthStore();
 
   // Tránh lỗi Hydration mismatch giữa Server và Client khi đọc localStorage
   const [isMounted, setIsMounted] = useState(false);
+  const [logoutOpen, setLogoutOpen] = useState(false);
   useEffect(() => {
     setIsMounted(true);
   }, []);
@@ -43,7 +53,7 @@ export function Header() {
               <div className="space-y-4">
                 <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Cơ bản</div>
                 
-                <Link href="#" className="flex items-start space-x-3 p-2 -mx-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#2b313a] transition-colors">
+                <Link href="/transaction/spot" className="flex items-start space-x-3 p-2 -mx-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#2b313a] transition-colors">
                   <div className="text-xl">📊</div>
                   <div>
                     <div className="font-semibold text-sm flex items-center gap-2">Spot</div>
@@ -167,55 +177,99 @@ export function Header() {
         <Search className="w-4 h-4 text-gray-400 dark:text-gray-500 cursor-pointer hover:text-gray-900 dark:hover:text-white" />
         
         {/* Kiểm tra trạng thái Đăng nhập */}
-        {isMounted && user ? (
-          <div className="flex items-center space-x-3">
-            <div className="flex items-center space-x-2 bg-gray-100 dark:bg-[#2b313a] px-3 py-1 rounded">
-              {user.avatar ? (
-                <img
-                  src={user.avatar}
-                  alt={user.name || 'User'}
-                  className="w-5 h-5 rounded-full object-cover"
-                />
-              ) : (
-                <User className="w-4 h-4 text-gray-500 dark:text-gray-300" />
-              )}
-              <span className="text-xs font-medium text-gray-900 dark:text-white max-w-[120px] truncate">
-                {user.name || user.email}
-              </span>
+        {isMounted && isInitialized ? (
+          user ? (
+            <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-2 bg-gray-100 dark:bg-[#2b313a] px-3 py-1 rounded">
+                {user.avatar ? (
+                  <img
+                    src={user.avatar}
+                    alt={user.name || 'User'}
+                    className="w-5 h-5 rounded-full object-cover"
+                  />
+                ) : (
+                  <User className="w-4 h-4 text-gray-500 dark:text-gray-300" />
+                )}
+                <span className="text-xs font-medium text-gray-900 dark:text-white max-w-[120px] truncate">
+                  {user.name || user.email}
+                </span>
+              </div>
+
+              <Popover open={logoutOpen} onOpenChange={setLogoutOpen}>
+                <PopoverTrigger render={
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    title="Đăng xuất"
+                    className="bg-gray-100 dark:bg-[#2b313a] hover:bg-gray-200 dark:hover:bg-[#363c4e] text-gray-900 dark:text-white rounded px-2 py-1 transition-colors"
+                  >
+                    <LogOut className="w-4 h-4 text-gray-500 dark:text-gray-300 hover:text-red-500 dark:hover:text-red-400" />
+                  </Button>
+                }/>
+                       
+                <PopoverContent>
+                  <PopoverTitle>Đăng xuất</PopoverTitle>
+                  <PopoverDescription>
+                    Bạn có chắc chắn muốn đăng xuất khỏi tài khoản không?
+                  </PopoverDescription>
+                  <div className="flex items-center justify-end gap-2 mt-4">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setLogoutOpen(false)}
+                      className="h-8 rounded-lg border-gray-200 dark:border-[#2b313a] bg-white dark:bg-transparent hover:bg-gray-100 dark:hover:bg-[#2b313a] text-gray-900 dark:text-white"
+                    >
+                      Hủy
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={async () => {
+                        try {
+                          await fetch(`${API_URL}/api/auth/logout`, {
+                            method: 'POST',
+                            credentials: 'include',
+                          });
+                        } catch (err) {
+                          console.error('Logout error:', err);
+                        } finally {
+                          logout();
+                          router.push('/login');
+                        }
+                      }}
+                      className="h-8 rounded-lg bg-[#F0B90B] hover:bg-[#d9a608] text-black font-semibold"
+                    >
+                      Đăng xuất
+                    </Button>
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
+          ) : (
+            <>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => router.push('/login')}
+                className="bg-gray-100 dark:bg-[#2b313a] hover:bg-gray-200 dark:hover:bg-[#363c4e] text-gray-900 dark:text-white rounded px-3 py-1 font-medium transition-colors"
+              >
+                Đăng nhập
+              </Button>
 
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                logout();
-                router.push('/login');
-              }}
-              title="Đăng xuất"
-              className="bg-gray-100 dark:bg-[#2b313a] hover:bg-gray-200 dark:hover:bg-[#363c4e] text-gray-900 dark:text-white rounded px-2 py-1 transition-colors"
-            >
-              <LogOut className="w-4 h-4 text-gray-500 dark:text-gray-300 hover:text-red-500 dark:hover:text-red-400" />
-            </Button>
-          </div>
+              <Button
+                size="sm"
+                onClick={() => router.push('/register')}
+                className="bg-[#F0B90B] hover:bg-[#d9a608] text-black font-semibold rounded px-3 py-1"
+              >
+                Đăng ký
+              </Button>
+            </>
+          )
         ) : (
-          <>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => router.push('/login')}
-              className="bg-gray-100 dark:bg-[#2b313a] hover:bg-gray-200 dark:hover:bg-[#363c4e] text-gray-900 dark:text-white rounded px-3 py-1 font-medium transition-colors"
-            >
-              Đăng nhập
-            </Button>
-
-            <Button
-              size="sm"
-              onClick={() => router.push('/register')}
-              className="bg-[#F0B90B] hover:bg-[#d9a608] text-black font-semibold rounded px-3 py-1"
-            >
-              Đăng ký
-            </Button>
-          </>
+          // Loading state hoặc giữ nguyên layout trống để tránh flash
+          <div className="flex items-center space-x-3">
+            <div className="w-20 h-9 bg-gray-100 dark:bg-[#2b313a] rounded animate-pulse" />
+            <div className="w-20 h-9 bg-[#F0B90B] rounded animate-pulse" />
+          </div>
         )}
 
         <Globe className="w-4 h-4 text-gray-400 dark:text-gray-500 cursor-pointer hover:text-gray-900 dark:hover:text-white ml-2" />

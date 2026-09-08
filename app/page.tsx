@@ -101,8 +101,7 @@ export default function BinanceMarketOverview() {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#181a20] text-gray-900 dark:text-[#eaecef] font-sans text-xs md:text-sm transition-colors duration-200">
-      <Header />
+    <div className="min-h-screen bg-white dark:bg-[#181a20] text-gray-900 dark:text-[#eaecef] font-sans text-xs md:text-sm transition-colors duration-200"> 
 
       <div role="main" className="max-w-[1280px] mx-auto px-4 py-6 space-y-8">
         {/* Main Navigation Tabs */}

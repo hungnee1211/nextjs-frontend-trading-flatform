@@ -3,6 +3,8 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Footer } from "@/components/footer";
 import { Providers } from "@/components/providers/provider-theme";
+import { Header } from "@/components/header";
+import { AuthInitializer } from "@/components/auth-initializer";
 
 
 const inter = Inter({
@@ -28,6 +30,8 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-white dark:bg-[#0b0e11] text-gray-900 dark:text-white transition-colors duration-200">
         <Providers>
+          <AuthInitializer />
+          <Header/>
           <div className="flex-1 flex flex-col">
             {children}
           </div>

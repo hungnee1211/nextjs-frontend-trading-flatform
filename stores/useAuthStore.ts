@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
 
 type UserProfile = {
   id: string;
@@ -10,30 +9,25 @@ type UserProfile = {
 
 type AuthState = {
   user: UserProfile | null;
-  token: string | null;
-  setAuth: (user: UserProfile, token?: string) => void;
+  isInitialized: boolean;
+  setAuth: (user: UserProfile) => void;
+  setInitialized: (value: boolean) => void;
   logout: () => void;
 };
 
-export const useAuthStore = create<AuthState>()(
-  persist(
-    (set) => ({
-      user: null,
-      token: null,
+export const useAuthStore = create<AuthState>()((set) => ({
+  user: null,
+  isInitialized: false,
 
-      // Cập nhật thông tin user & token
-      setAuth: (user, token) =>
-        set((state) => ({
-          user,
-          token: token ?? state.token,
-        })),
+  setAuth: (user) =>
+    set(() => ({
+      user,
+    })),
 
-      // Đăng xuất
-      logout: () => set({ user: null, token: null }),
-    }),
-    {
-      name: 'auth-storage', // Tên key trong localStorage
-      storage: createJSONStorage(() => localStorage),
-    }
-  )
-);
+  setInitialized: (value) =>
+    set(() => ({
+      isInitialized: value,
+    })),
+
+  logout: () => set({ user: null }),
+}));

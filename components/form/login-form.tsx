@@ -13,7 +13,6 @@ const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
 type ApiResponse = {
   success: boolean;
   message: string;
-  token?: string;
   user?: { id: string; name: string; email: string; avatar?: string };
 };
 
@@ -43,7 +42,7 @@ export function LoginForm() {
 
   const handleAuthSuccess = (data: ApiResponse) => {
     if (data.user) {
-      setAuth(data.user, data.token);
+      setAuth(data.user);
     }
     router.push('/');
   };
