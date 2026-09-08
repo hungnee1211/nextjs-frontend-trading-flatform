@@ -1,69 +1,193 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import React, { useEffect, useState, useMemo } from 'react';
+import { ChevronRight } from 'lucide-react';
+import { CoinData } from '@/types/crypto';
+import { Header } from '@/components/header';
+import { CoinTable } from '@/components/main-screen/coin-table';
+import { NavigationTabs } from '@/components/main-screen/navigation';
+import { StatCardsSection } from '@/components/main-screen/start-card-section';
+import { SupportButton } from '@/components/support-button';
+import { TradingDataSection } from '@/components/market-cap/trading-data-section';
+import { ChartView } from '@/components/field/chart-view';
+
+export default function BinanceMarketOverview() {
+  const [coins, setCoins] = useState<CoinData[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [mainTab, setMainTab] = useState<'overview' | 'tradingData'>('overview');
+  const [activeTab, setActiveTab] = useState('Tất cả');
+
+  // --- STATE TÌM KIẾM ---
+  const [searchQuery, setSearchQuery] = useState<string>('');
+
+  // --- STATE QUẢN LÝ COIN ĐƯỢC CHỌN VÀ DATA CHART ---
+  const [selectedCoin, setSelectedCoin] = useState<CoinData | null>(null);
+  const [timeframe, setTimeframe] = useState('7');
+  const [chartData, setChartData] = useState<{ time: string; price: number }[]>([]);
+  const [loadingChart, setLoadingChart] = useState<boolean>(false);
+
+  useEffect(() => {
+    const fetchMarketData = async () => {
+      try {
+        const response = await fetch(
+          'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1&sparkline=false&price_change_percentage=24h'
+        );
+        const data = await response.json();
+        if (Array.isArray(data)) {
+          setCoins(data);
+          // Set coin mặc định là coin đầu tiên (BTC) nếu chưa có selectedCoin
+          if (!selectedCoin && data.length > 0) {
+            setSelectedCoin(data[0]);
+          }
+        }
+      } catch (error) {
+        console.error('Lỗi khi tải dữ liệu:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMarketData();
+    const interval = setInterval(fetchMarketData, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // --- LOGIC LỌC COIN THEO SYMBOL HOẶC TÊN ---
+  const filteredCoins = useMemo(() => {
+    if (!searchQuery.trim()) return coins;
+    const query = searchQuery.toLowerCase().trim();
+    return coins.filter(
+      (coin) =>
+        coin.name.toLowerCase().includes(query) ||
+        coin.symbol.toLowerCase().includes(query)
+    );
+  }, [coins, searchQuery]);
+
+  // --- FETCH DỮ LIỆU BIỂU ĐỒ MỖI KHI SELECTED COIN HOẶC TIMEFRAME THAY ĐỔI ---
+  useEffect(() => {
+    if (!selectedCoin) return;
+
+    const fetchChartData = async () => {
+      setLoadingChart(true);
+      try {
+        const res = await fetch(
+          `https://api.coingecko.com/api/v3/coins/${selectedCoin.id}/market_chart?vs_currency=usd&days=${timeframe}`
+        );
+        const data = await res.json();
+        if (data && data.prices) {
+          const formatted = data.prices.map(([timestamp, price]: [number, number]) => ({
+            time: new Date(timestamp).toLocaleDateString(),
+            price,
+          }));
+          setChartData(formatted);
+        }
+      } catch (error) {
+        console.error('Lỗi khi tải dữ liệu biểu đồ:', error);
+      } finally {
+        setLoadingChart(false);
+      }
+    };
+
+    fetchChartData();
+  }, [selectedCoin?.id, timeframe]);
+
+  const formatCompact = (num: number) => {
+    if (!num) return '$0';
+    if (num >= 1e12) return `$${(num / 1e12).toFixed(2)}T`;
+    if (num >= 1e9) return `$${(num / 1e9).toFixed(2)}B`;
+    if (num >= 1e6) return `$${(num / 1e6).toFixed(2)}M`;
+    if (num >= 1e3) return `$${(num / 1e3).toFixed(2)}K`;
+    return `$${num.toFixed(2)}`;
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <div className="min-h-screen bg-white dark:bg-[#181a20] text-gray-900 dark:text-[#eaecef] font-sans text-xs md:text-sm transition-colors duration-200">
+      <Header />
+
+      <div role="main" className="max-w-[1280px] mx-auto px-4 py-6 space-y-8">
+        {/* Main Navigation Tabs */}
+        <div className="flex items-center space-x-6 text-base font-semibold border-b border-[#2b313a]/50 pb-2">
+          <span
+            onClick={() => setMainTab('overview')}
+            className={`pb-2 cursor-pointer transition-colors ${
+              mainTab === 'overview'
+                ? 'text-white border-b-2 border-[#F0B90B]'
+                : 'text-gray-400 hover:text-white'
+            }`}
           >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
+            Tổng quan
+          </span>
+          <span
+            onClick={() => setMainTab('tradingData')}
+            className={`pb-2 cursor-pointer transition-colors ${
+              mainTab === 'tradingData'
+                ? 'text-white border-b-2 border-[#F0B90B]'
+                : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            Dữ liệu Giao dịch
+          </span>
+          <span className="text-gray-400 hover:text-white cursor-pointer pb-2">
+            Lựa chọn của AI
+          </span>
+          <span className="text-gray-400 hover:text-white cursor-pointer pb-2">
+            Mở khóa token
+          </span>
+        </div>
+
+        {/* Dynamic Render theo State */}
+        {mainTab === 'overview' ? (
+          <>
+            <StatCardsSection coins={coins} formatCompact={formatCompact} />
+
+            {/* Hiển thị Biểu đồ tương ứng với coin đang chọn */}
+            {selectedCoin && (
+              <ChartView
+                selectedCoin={selectedCoin}
+                timeframe={timeframe}
+                setTimeframe={setTimeframe}
+                chartData={chartData}
+                loading={loadingChart}
+              />
+            )}
+
+            <NavigationTabs
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+              onSearchChange={(query) => setSearchQuery(query)}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+
+            <div>
+              <h2 className="text-lg font-bold text-white">
+                Top token theo vốn hóa thị trường
+              </h2>
+              <div className="flex items-center justify-between text-gray-400 text-xs mt-1">
+                <p>
+                  Nhận dữ liệu thu thập tổng quan về tất cả các loại tiền mã hóa có
+                  sẵn trên Binance. Trang này hiển thị giá mới nhất, khối lượng giao
+                  dịch trong 24 giờ, biến động giá và vốn hóa thị trường...
+                </p>
+                <button className="flex items-center text-gray-300 hover:text-[#F0B90B] whitespace-nowrap ml-2">
+                  Nhều hơn <ChevronRight className="w-3 h-3 ml-0.5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Truyền mảng filteredCoins thay cho coins */}
+            <CoinTable
+              coins={filteredCoins}
+              loading={loading}
+              formatCompact={formatCompact}
+              onSelectCoin={(coin) => setSelectedCoin(coin)}
+              selectedCoinId={selectedCoin?.id}
+            />
+          </>
+        ) : (
+          <TradingDataSection coins={coins} loading={loading} />
+        )}
+      </div>
+
+      <SupportButton />
     </div>
   );
 }
