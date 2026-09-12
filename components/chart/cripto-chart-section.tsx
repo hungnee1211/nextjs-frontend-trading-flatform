@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { ChartHeader } from './chart-header';
-import { ChartView } from './chart-view';
-import { BuyWidget } from './buy-widget';
+import { ChartHeader } from '../field/chart-header';
+import { ChartView } from '../main-screen/chart-view';
+import { BuyWidget } from '../field/buy-widget';
 
 type TimeframeType = '1' | '7' | '30' | '90' | '365';
 

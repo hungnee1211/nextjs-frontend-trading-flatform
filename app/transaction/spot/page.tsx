@@ -1,4 +1,4 @@
-import CryptoExchange from '@/components/field/cripto-chart-exchange'
+import CryptoExchange from '@/components/spot/cripto-chart-exchange'
 import React from 'react'
 
 const page = () => {

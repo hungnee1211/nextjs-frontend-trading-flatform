@@ -1,11 +1,12 @@
 'use client';
 
-import { RegisterBanner } from '@/components/form/register-banner';
-import { RegisterForm } from '@/components/form/register-form';
-import { SupportButton } from '@/components/support-button';
+import { RegisterBanner } from '@/components/auth/register-banner';
+import { RegisterForm } from '@/components/auth/register-form';
+import { SupportButton } from '@/components/chart/support-button';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 
 
 export default function RegisterPage() {
@@ -61,6 +62,13 @@ export default function RegisterPage() {
           <RegisterForm />
         </div>
       </main>
+
+      {/* Bottom Footer Links */}
+      <div className="mt-8 text-center text-xs">
+        <Link href="/login" className="text-[#F0B90B] hover:underline font-medium">
+          Đã có tài khoản? Đăng nhập
+        </Link>
+      </div>
 
       {/* Floating Support Icon */}
       <SupportButton />

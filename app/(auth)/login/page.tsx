@@ -1,9 +1,10 @@
 'use client';
 
-import { LoginForm } from '@/components/form/login-form';
+import { LoginForm } from '@/components/auth/login-form';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 
 
 export default function LoginPage() {
@@ -44,9 +45,9 @@ export default function LoginPage() {
       {/* Bottom Footer Links */}
       <div className="mt-8 space-y-3 text-center text-xs">
         <div>
-          <a href="#" className="text-[#F0B90B] hover:underline font-medium">
+          <Link href="/register" className="text-[#F0B90B] hover:underline font-medium">
             Tạo tài khoản Binance
-          </a>
+          </Link>
         </div>
         <div>
           <a href="#" className="text-[#F0B90B] hover:underline font-medium">

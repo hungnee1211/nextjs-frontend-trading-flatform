@@ -3,13 +3,12 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { ChevronRight } from 'lucide-react';
 import { CoinData } from '@/types/crypto';
-import { Header } from '@/components/header';
 import { CoinTable } from '@/components/main-screen/coin-table';
 import { NavigationTabs } from '@/components/main-screen/navigation';
 import { StatCardsSection } from '@/components/main-screen/start-card-section';
-import { SupportButton } from '@/components/support-button';
-import { TradingDataSection } from '@/components/market-cap/trading-data-section';
-import { ChartView } from '@/components/field/chart-view';
+import { SupportButton } from '@/components/chart/support-button';
+import { TradingDataSection } from '@/components/main-screen/trading-data-section';
+import { ChartView } from '@/components/main-screen/chart-view';
 
 export default function BinanceMarketOverview() {
   const [coins, setCoins] = useState<CoinData[]>([]);
