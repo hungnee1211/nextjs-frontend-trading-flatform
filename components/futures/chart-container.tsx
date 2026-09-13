@@ -29,6 +29,7 @@ interface FuturesChartContainerProps {
 export default function ChartContainer({ symbol = 'BTCUSDT' }: FuturesChartContainerProps) {
   const [timeframe, setTimeframe] = useState('1h');
   const timeframes = ['1m', '5m', '15m', '1h', '4h', '1d'];
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const chartContainerRef = useRef<HTMLDivElement | null>(null);
   const candlestickSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
@@ -96,6 +97,8 @@ export default function ChartContainer({ symbol = 'BTCUSDT' }: FuturesChartConta
   useEffect(() => {
     if (!candlestickSeriesRef.current) return;
 
+    setIsLoading(true);
+    
     // Đóng WebSocket cũ
     if (wsRef.current) wsRef.current.close();
 
@@ -118,7 +121,8 @@ export default function ChartContainer({ symbol = 'BTCUSDT' }: FuturesChartConta
         candlestickSeriesRef.current?.setData(formattedData);
         chartInstanceRef.current?.timeScale().fitContent();
       })
-      .catch((err) => console.error('Lỗi khi lấy klines futures:', err));
+      .catch((err) => console.error('Lỗi khi lấy klines futures:', err))
+      .finally(() => setIsLoading(false));
 
     // 2. Kết nối WebSocket real-time
     const wsUrl = `wss://stream.binance.com:9443/ws/${symbolLower}@kline_${interval}`;
@@ -171,9 +175,17 @@ export default function ChartContainer({ symbol = 'BTCUSDT' }: FuturesChartConta
       {/* Chart area */}
       <div
         ref={chartContainerRef}
-        className="flex-1 w-full"
+        className="flex-1 w-full relative"
         style={{ minHeight: '400px' }}
-      />
+      >
+        {isLoading && (
+          <div
+            className="absolute inset-0 flex items-center justify-center bg-[#181a20]/80 z-10 text-gray-400 text-sm"
+          >
+            Đang tải biểu đồ...
+          </div>
+        )}
+      </div>
     </div>
   );
 }

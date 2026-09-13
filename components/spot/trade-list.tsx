@@ -22,11 +22,14 @@ const TradesPanel: React.FC = () => {
 
   const [marketTab, setMarketTab] = useState<'marketTrades' | 'myTrades'>('marketTrades');
   const [recentTrades, setRecentTrades] = useState<TradeItem[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const wsTradesRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
     if (!selectedSymbol) return;
 
+    setIsLoading(true);
+    
     if (wsTradesRef.current) wsTradesRef.current.close();
     setRecentTrades([]);
 
@@ -42,7 +45,8 @@ const TradesPanel: React.FC = () => {
         }));
         setRecentTrades(formatted.reverse());
       })
-      .catch((err) => console.error('Lỗi lấy trades:', err));
+      .catch((err) => console.error('Lỗi lấy trades:', err))
+      .finally(() => setIsLoading(false));
 
     const symbolLower = selectedSymbol.toLowerCase();
     const tradeWs = new WebSocket(`wss://stream.binance.com:9443/ws/${symbolLower}@trade`);
@@ -116,15 +120,25 @@ const TradesPanel: React.FC = () => {
             <span>Thời gian</span>
           </div>
           <div style={{ flex: 1, overflowY: 'auto', padding: '0 4px' }}>
-            {recentTrades.map((t) => (
-              <div key={t.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 8px', fontSize: '12px' }}>
-                <span style={{ color: t.isBuyerMaker ? '#f6465d' : '#0ecb81', fontWeight: 500 }}>
-                  {parseFloat(t.price).toFixed(2)}
-                </span>
-                <span style={{ color: '#eaecef' }}>{parseFloat(t.qty).toFixed(4)}</span>
-                <span style={{ color: '#848e9c' }}>{t.time}</span>
+            {isLoading ? (
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100px', color: '#848e9c', fontSize: '12px' }}>
+                Đang tải lịch sử giao dịch...
               </div>
-            ))}
+            ) : recentTrades.length === 0 ? (
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100px', color: '#848e9c', fontSize: '12px' }}>
+                Chưa có dữ liệu giao dịch
+              </div>
+            ) : (
+              recentTrades.map((t) => (
+                <div key={t.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 8px', fontSize: '12px' }}>
+                  <span style={{ color: t.isBuyerMaker ? '#f6465d' : '#0ecb81', fontWeight: 500 }}>
+                    {parseFloat(t.price).toFixed(2)}
+                  </span>
+                  <span style={{ color: '#eaecef' }}>{parseFloat(t.qty).toFixed(4)}</span>
+                  <span style={{ color: '#848e9c' }}>{t.time}</span>
+                </div>
+              ))
+            )}
           </div>
         </>
       ) : (

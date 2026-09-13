@@ -35,6 +35,7 @@ const ChartPanel: React.FC = () => {
   const candlestickSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
   const chartInstanceRef = useRef<IChartApi | null>(null);
   const wsChartRef = useRef<WebSocket | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // Chỉ panel này cần biết popup tìm coin đang mở hay đóng -> state cục bộ.
   const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
@@ -78,16 +79,19 @@ const ChartPanel: React.FC = () => {
     };
   }, []);
 
-  // Tải dữ liệu & mở WebSocket kline mỗi khi đổi symbol
+// Tải dữ liệu & mở WebSocket kline mỗi khi đổi symbol
   useEffect(() => {
     if (!selectedSymbol || !candlestickSeriesRef.current) return;
 
+    setIsLoading(true);
+    
     if (wsChartRef.current) wsChartRef.current.close();
 
     axios
       .get(`https://api.binance.com/api/v3/ticker/24hr?symbol=${selectedSymbol}`)
       .then((res) => setTickerData(res.data))
-      .catch((err) => console.error('Lỗi khi lấy dữ liệu ticker:', err));
+      .catch((err) => console.error('Lỗi khi lấy dữ liệu ticker:', err))
+      .finally(() => setIsLoading(false));
 
     axios
       .get<Array<[number, string, string, string, string, ...unknown[]]>>(
@@ -111,9 +115,6 @@ const ChartPanel: React.FC = () => {
     klineWs.onmessage = (event: MessageEvent) => {
       const message: BinanceKlineStream = JSON.parse(event.data);
       const k = message.k;
-      // Cập nhật trực tiếp vào chart qua ref, KHÔNG qua React state.
-      // Đây là điểm tối ưu quan trọng nhất: nến cập nhật liên tục nhưng
-      // không hề khiến React re-render.
       candlestickSeriesRef.current?.update({
         time: Math.floor(k.t / 1000) as Time,
         open: parseFloat(k.o),
@@ -182,6 +183,26 @@ const ChartPanel: React.FC = () => {
 
       <div style={{ flex: 1, width: '100%', position: 'relative', overflow: 'hidden' }}>
         <div ref={chartContainerRef} style={{ width: '100%', height: '100%', position: 'absolute' }} />
+        {isLoading && (
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(18, 22, 28, 0.8)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 10,
+              color: '#848e9c',
+              fontSize: '14px',
+            }}
+          >
+            Đang tải biểu đồ...
+          </div>
+        )}
       </div>
     </div>
   );
