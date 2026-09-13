@@ -21,8 +21,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Button } from '@/components/ui/button';
 
 import { useAuthStore } from '@/stores/useAuthStore';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+import { api } from '@/lib/axios';
 
 export function Header() {
   const router = useRouter();
@@ -39,10 +38,7 @@ export function Header() {
 
   const handleLogout = async () => {
     try {
-      await fetch(`${API_URL}/api/auth/logout`, {
-        method: 'POST',
-        credentials: 'include',
-      });
+      await api.post('/api/auth/logout');
     } catch (err) {
       console.error('Logout error:', err);
     } finally {

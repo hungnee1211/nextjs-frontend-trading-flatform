@@ -6,8 +6,8 @@ import { QrCode, User, Send, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuthStore } from '@/stores/useAuthStore';
+import { api } from '@/lib/axios';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
 
 type ApiResponse = {
@@ -76,16 +76,10 @@ export function LoginForm() {
 
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/api/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ email: account, password, rememberMe }),
-      });
+      const res = await api.post<ApiResponse>('/api/auth/login', { email: account, password, rememberMe });
+      const data = res.data;
 
-      const data: ApiResponse = await res.json();
-
-      if (!res.ok || !data.success) {
+      if (!data.success) {
         setError(data.message || 'Đăng nhập thất bại, vui lòng thử lại');
         return;
       }
@@ -103,16 +97,10 @@ export function LoginForm() {
     setError(null);
     setGoogleLoading(true);
     try {
-      const res = await fetch(`${API_URL}/api/auth/google`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ idToken }),
-      });
+      const res = await api.post<ApiResponse>('/api/auth/google', { idToken });
+      const data = res.data;
 
-      const data: ApiResponse = await res.json();
-
-      if (!res.ok || !data.success) {
+      if (!data.success) {
         setError(data.message || 'Đăng nhập bằng Google thất bại');
         return;
       }

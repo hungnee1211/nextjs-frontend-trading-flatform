@@ -2,8 +2,7 @@
 
 import { useEffect } from 'react';
 import { useAuthStore } from '@/stores/useAuthStore';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+import { api } from '@/lib/axios';
 
 export function AuthInitializer() {
   const setAuth = useAuthStore((state) => state.setAuth);
@@ -16,15 +15,10 @@ export function AuthInitializer() {
 
     const initAuth = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/auth/me`, {
-          method: 'GET',
-          credentials: 'include',
-        });
+        const res = await api.get<{ success: boolean; user: { id: string; name: string; email: string; avatar?: string } }>('/api/auth/me');
 
-        const data = await res.json();
-
-        if (res.ok && data.success && data.user) {
-          setAuth(data.user);
+        if (res.data.success && res.data.user) {
+          setAuth(res.data.user);
         }
       } catch (err) {
         console.log('No active session');

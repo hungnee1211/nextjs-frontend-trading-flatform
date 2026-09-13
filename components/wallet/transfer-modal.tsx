@@ -16,7 +16,15 @@ interface Props {
 export default function TransferModal({ assets, onClose, onSuccess }: Props) {
   // Lọc các asset có số dư > 0 trong ít nhất 1 wallet type
   const transferable = useMemo(() => {
-    return assets.filter((a) => a.total > 0);
+    // Lọc asset có total > 0, rồi unique theo asset (hiển thị 1 lần mỗi asset)
+    const seen = new Set<string>();
+    return assets
+      .filter((a) => a.total > 0)
+      .filter((a) => {
+        if (seen.has(a.asset)) return false;
+        seen.add(a.asset);
+        return true;
+      });
   }, [assets]);
 
   const [asset, setAsset] = useState(transferable[0]?.asset ?? '');

@@ -1,3 +1,4 @@
+import { api } from '@/lib/axios';
 import type {
   ApiResponse,
   DepositPayload,
@@ -9,89 +10,41 @@ import type {
   WithdrawPayload,
 } from '@/types/wallet';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
-
 /**
- * Headers cho API requests. Dự án dùng cookie httpOnly (credentials: 'include')
- * nên không cần Authorization header. Chỉ cần Content-Type.
+ * Extract data from axios response, handling error format
  */
-function buildHeaders(): HeadersInit {
-  return {
-    'Content-Type': 'application/json',
-  };
-}
-
-async function unwrap<T>(res: Response): Promise<T> {
-  let json: ApiResponse<T> | null = null;
-  try {
-    json = await res.json();
-  } catch {
-    // response không phải JSON hợp lệ
+function unwrap<T>(response: { data: ApiResponse<T> }): T {
+  const json = response.data;
+  if (!json || json.success === false) {
+    throw new Error(json?.message || 'Yêu cầu thất bại');
   }
-
-  if (!res.ok || !json || json.success === false) {
-    const message = json?.message || `Yêu cầu thất bại (${res.status})`;
-    throw new Error(message);
-  }
-
   return json.data;
 }
 
 export async function fetchBalances(signal?: AbortSignal): Promise<WalletBalance[]> {
-  const res = await fetch(`${API_URL}/api/wallet/balance`, {
-    method: 'GET',
-    credentials: 'include',
-    headers: buildHeaders(),
-    signal,
-  });
-  return unwrap<WalletBalance[]>(res);
+  const response = await api.get<ApiResponse<WalletBalance[]>>('/api/wallet/balance', { signal });
+  return unwrap<WalletBalance[]>(response);
 }
 
 export async function fetchTransactions(
   params: { page?: number; limit?: number; type?: 'DEPOSIT' | 'WITHDRAW' | 'TRANSFER_IN' | 'TRANSFER_OUT'; asset?: string } = {},
   signal?: AbortSignal
 ): Promise<TransactionListResult> {
-  const qs = new URLSearchParams();
-  if (params.page) qs.set('page', String(params.page));
-  if (params.limit) qs.set('limit', String(params.limit));
-  if (params.type) qs.set('type', params.type);
-  if (params.asset) qs.set('asset', params.asset);
-
-  const res = await fetch(`${API_URL}/api/wallet/transactions?${qs.toString()}`, {
-    method: 'GET',
-    credentials: 'include',
-    headers: buildHeaders(),
-    signal,
-  });
-  return unwrap<TransactionListResult>(res);
+  const response = await api.get<ApiResponse<TransactionListResult>>('/api/wallet/transactions', { params, signal });
+  return unwrap<TransactionListResult>(response);
 }
 
 export async function depositFunds(payload: DepositPayload): Promise<Transaction> {
-  const res = await fetch(`${API_URL}/api/wallet/deposit`, {
-    method: 'POST',
-    credentials: 'include',
-    headers: buildHeaders(),
-    body: JSON.stringify(payload),
-  });
-  return unwrap<Transaction>(res);
+  const response = await api.post<ApiResponse<Transaction>>('/api/wallet/deposit', payload);
+  return unwrap<Transaction>(response);
 }
 
 export async function withdrawFunds(payload: WithdrawPayload): Promise<Transaction> {
-  const res = await fetch(`${API_URL}/api/wallet/withdraw`, {
-    method: 'POST',
-    credentials: 'include',
-    headers: buildHeaders(),
-    body: JSON.stringify(payload),
-  });
-  return unwrap<Transaction>(res);
+  const response = await api.post<ApiResponse<Transaction>>('/api/wallet/withdraw', payload);
+  return unwrap<Transaction>(response);
 }
 
 export async function transferFunds(payload: TransferPayload): Promise<TransferResult> {
-  const res = await fetch(`${API_URL}/api/wallet/transfer`, {
-    method: 'POST',
-    credentials: 'include',
-    headers: buildHeaders(),
-    body: JSON.stringify(payload),
-  });
-  return unwrap<TransferResult>(res);
+  const response = await api.post<ApiResponse<TransferResult>>('/api/wallet/transfer', payload);
+  return unwrap<TransferResult>(response);
 }
